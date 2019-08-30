@@ -54,7 +54,17 @@ index d i
     index' d i    = index' (right d) (i - 1)
 
 insertAt :: DList a -> Int -> a -> DList a
-insertAt list index value = todo
+insertAt list index value
+  | index < 0 = throw NegativeIndexException
+  | otherwise = insertAt' DNil list index value
+  where
+    insertAt' l list 0 value =
+      let rec = DCons l value (insertAt' rec list (-1) value)
+      in rec
+    insertAt' _ DNil index _ = if index < 0 then DNil else throw IndexTooLargeException
+    insertAt' l list index value =
+      let rec = DCons l (current list) (insertAt' rec (right list) (index - 1) value)
+      in rec
 
 removeAt :: DList a -> Int -> DList a
 removeAt list index = todo
