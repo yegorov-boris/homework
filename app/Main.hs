@@ -1,6 +1,6 @@
 module Main where
 
-import Lib
+import Task5_1
 
 main :: IO ()
-main = someFunc
+main = let d = list2dlist [42, 73] in putStrLn $ show $ index d 0
