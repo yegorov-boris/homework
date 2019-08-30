@@ -42,8 +42,14 @@ sinPrecisions a = fmap fst $ generate (a', 0) $ uncurry newState
     sin x n = let m = 2*n + 1 in sin' x x m
 
 ePrecisions :: Stream Rational
-ePrecisions = todo
+ePrecisions = fmap fst $ generate (2, 1) $ uncurry newState
+  where
+    newState s n = let nn = succ n in (s + (1 / (fromInteger $ fact 1 nn)), nn)
 
 sin' :: Double -> Double -> Int -> Double
 sin' s _ 1 = s
 sin' s a n = sin' (s*a / (fromIntegral n)) a (n - 1)
+
+fact :: Integer -> Integer -> Integer
+fact a 1 = a
+fact a n = fact (a*n) (n - 1)
