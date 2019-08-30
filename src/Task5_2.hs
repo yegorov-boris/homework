@@ -32,7 +32,18 @@ instance Monad Stream where
     ss >>= f = sflatten (f <$> ss)
 
 sinPrecisions :: Double -> Stream Double
-sinPrecisions = todo
+sinPrecisions a = fmap fst $ generate (a', 0) $ uncurry newState
+  where
+    a' = let x' = a / (2*pi) in 2*pi*(x' - fromIntegral (round x'))
+    newState s n = let nn   = succ n
+                       sins = sin a' nn
+                       ns   = if nn `mod` 2 == 0 then s + sins else s - sins
+                   in (ns, nn)
+    sin x n = let m = 2*n + 1 in sin' x x m
 
 ePrecisions :: Stream Rational
 ePrecisions = todo
+
+sin' :: Double -> Double -> Int -> Double
+sin' s _ 1 = s
+sin' s a n = sin' (s*a / (fromIntegral n)) a (n - 1)

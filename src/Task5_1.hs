@@ -1,7 +1,6 @@
 module Task5_1 where
 
 import Control.Exception
-import Todo(todo)
 
 data IndexTooLargeException = IndexTooLargeException
 
