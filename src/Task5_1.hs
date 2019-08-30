@@ -67,4 +67,12 @@ insertAt list index value
       in rec
 
 removeAt :: DList a -> Int -> DList a
-removeAt list index = todo
+removeAt list index
+  | index < 0 = throw NegativeIndexException
+  | otherwise = removeAt' DNil list index
+  where
+    removeAt' _ DNil index = if index < 0 then DNil else throw IndexTooLargeException
+    removeAt' l list 0 = removeAt' l (right list) (-1)
+    removeAt' l list index =
+      let rec = DCons l (current list) (removeAt' rec (right list) (index - 1))
+      in rec
