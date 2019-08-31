@@ -22,7 +22,51 @@ insert s x = refreshLinks $ makeBlack $ ins s
         makeBlack (T p _ a y b) = T p B a y b
 
 remove :: Ord a => LinkedTree a -> a -> LinkedTree a
-remove s x = refreshLinks s
+remove t x = refreshLinks $ makeBlack $ del x t
+  where makeBlack (T _ _ a y b) = T E B a y b
+        makeBlack E           = E
+
+del :: (Ord a) => a -> LinkedTree a -> LinkedTree a
+del x t@(T _ _ l y r)
+  | x < y = delL x t
+  | x > y = delR x t
+  | otherwise = fuse l r
+
+delL :: (Ord a) => a -> LinkedTree a -> LinkedTree a
+delL x t@(T _ B t1 y t2) = balL $ T E B (del x t1) y t2
+delL x t@(T _ R t1 y t2) = T E R (del x t1) y t2
+
+balL :: LinkedTree a -> LinkedTree a
+balL (T _ B (T _ R t1 x t2) y t3) = T E R (T E B t1 x t2) y t3
+balL (T _ B t1 y (T _ B t2 z t3)) = balance' (T E B t1 y (T E R t2 z t3))
+balL (T _ B t1 y (T _ R (T _ B t2 u t3) z t4@(T _ B l value r))) =
+  T E R (T E B t1 y t2) u (balance' (T E B t3 z (T E R l value r)))
+
+delR :: (Ord a) => a -> LinkedTree a -> LinkedTree a
+delR x t@(T _ B t1 y t2) = balR $ T E B t1 y (del x t2)
+delR x t@(T _ R t1 y t2) = T E R t1 y (del x t2)
+
+balR :: LinkedTree a -> LinkedTree a
+balR (T _ B t1 y (T _ R t2 x t3)) = T E R t1 y (T E B t2 x t3)
+balR (T _ B (T _ B t1 z t2) y t3) = balance' (T E B (T E R t1 z t2) y t3)
+balR (T _ B (T _ R t1@(T _ B l value r) z (T _ B t2 u t3)) y t4) =
+  T E R (balance' (T E B (T E R l value r) z t2)) u (T E B t3 y t4)
+
+fuse :: LinkedTree a -> LinkedTree a -> LinkedTree a
+fuse E t = t
+fuse t E = t
+fuse t1@(T _ B _ _ _) (T _ R t3 y t4) = T E R (fuse t1 t3) y t4
+fuse (T _ R t1 x t2) t3@(T _ B _ _ _) = T E R t1 x (fuse t2 t3)
+fuse (T _ R t1 x t2) (T _ R t3 y t4)  =
+  let s = fuse t2 t3
+  in case s of
+       (T _ R s1 z s2) -> (T E R (T E R t1 x s1) z (T E R s2 y t4))
+       (T _ B _ _ _)   -> (T E R t1 x (T E R s y t4))
+fuse (T _ B t1 x t2) (T _ B t3 y t4)  =
+  let s = fuse t2 t3
+  in case s of
+       (T _ R s1 z s2) -> (T E R (T E B t1 x s1) z (T E B s2 y t4))
+       (T _ B s1 z s2) -> balL (T E B t1 x (T E B s y t4))
 
 balance B (T _ R (T _ R a x b) y c) z d =
   T E R (T E B a x b) y (T E B c z d)
@@ -34,6 +78,10 @@ balance B a x (T _ R b y (T _ R c z d)) =
   T E R (T E B a x b) y (T E B c z d)
 balance color left value right =
   T E color left value right
+
+balance' :: LinkedTree a -> LinkedTree a
+balance' E = E
+balance' (T _ c l v r) = balance c l v r
 
 refreshLinks :: LinkedTree a -> LinkedTree a
 refreshLinks t = setParent E t
