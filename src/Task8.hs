@@ -10,6 +10,14 @@ digit = oneOf $ ['0'..'9']
 number :: Parser Integer
 number = read <$> many1 digit
 
+negation :: Parser Integer
+negation = try negation' <|> addition
+  where
+    negation' = do
+      char '-'
+      x <- expr
+      return $ negate x
+
 byNumber :: Char
                     -> (Integer -> Integer -> Integer)
                     -> Parser Integer
@@ -63,7 +71,7 @@ expr = number
         <|> do
                 char '('
                 spaces
-                res <- addition
+                res <- negation
                 char ')'
                 spaces
                 return $ res
@@ -71,7 +79,7 @@ expr = number
 root :: Parser Integer
 root = do
             spaces
-            p <- addition
+            p <- negation
             eof
             return $ p
 
@@ -80,7 +88,3 @@ root = do
 --            s <- getLine
 --            putStrLn $ show $ parse root "<input>" s
 --            main
-
---Числа с плавающей точкой
---Операцию унарного минуса
---Операцию возведения в степень
