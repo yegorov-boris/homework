@@ -7,10 +7,17 @@ type Parser a = Parsec String () a
 digit :: Parser Char
 digit = oneOf $ ['0'..'9']
 
-number :: Parser Integer
-number = read <$> many1 digit
+number :: (Floating a, Read a) => Parser a
+number = do
+  i <- many1 digit
+  point <- optionMaybe $ char '.'
+  case point of
+    Nothing -> return $ read i
+    Just _ -> do
+      f <- many1 digit
+      return $ read $ i ++ '.':f
 
-negation :: Parser Integer
+negation :: (Floating a, Read a) => Parser a
 negation = try negation' <|> addition
   where
     negation' = do
@@ -18,10 +25,11 @@ negation = try negation' <|> addition
       x <- expr
       return $ negate x
 
-byNumber :: Char
-                    -> (Integer -> Integer -> Integer)
-                    -> Parser Integer
-                    -> Parser (Integer -> Integer)
+byNumber :: Floating a =>
+    Char
+  -> (a -> a -> a)
+  -> Parser a
+  -> Parser (a -> a)
 byNumber symbol func base =
                     do
                         char symbol
@@ -30,43 +38,43 @@ byNumber symbol func base =
                         spaces
                         return $ (`func` n)
 
-powNumber :: Parser (Integer -> Integer)
-powNumber = byNumber '^' (^) expr
+powNumber :: (Floating a, Read a) => Parser (a -> a)
+powNumber = byNumber '^' (**) expr
 
-power :: Parser Integer
+power :: (Floating a, Read a) => Parser a
 power = do
            x <- expr
            spaces
            ys <- many powNumber
            return $ foldl (\ x f -> f x) x ys
 
-multNumber :: Parser (Integer -> Integer)
+multNumber :: (Floating a, Read a) => Parser (a -> a)
 multNumber = byNumber '*' (*) power
 
-divNumber :: Parser (Integer -> Integer)
-divNumber = byNumber '/' div power
+divNumber :: (Floating a, Read a) => Parser (a -> a)
+divNumber = byNumber '/' (/) power
 
-multiplication :: Parser Integer
+multiplication :: (Floating a, Read a) => Parser a
 multiplication = do
                     x <- power
                     spaces
                     ys <- many (multNumber <|> divNumber)
                     return $ foldl (\ x f -> f x) x ys
 
-plusNumber :: Parser (Integer -> Integer)
+plusNumber :: (Floating a, Read a) => Parser (a -> a)
 plusNumber = byNumber '+' (+) multiplication
 
-minusNumber :: Parser (Integer -> Integer)
+minusNumber :: (Floating a, Read a) => Parser (a -> a)
 minusNumber = byNumber '-' (-) multiplication
 
-addition :: Parser Integer
+addition :: (Floating a, Read a) => Parser a
 addition = do
                 x <- multiplication
                 spaces
                 ys <- many (plusNumber <|> minusNumber)
                 return $ foldl (\ x f -> f x) x ys
 
-expr :: Parser Integer
+expr :: (Floating a, Read a) => Parser a
 expr = number
         <|> do
                 char '('
@@ -76,7 +84,7 @@ expr = number
                 spaces
                 return $ res
 
-root :: Parser Integer
+root :: (Floating a, Read a) => Parser a
 root = do
             spaces
             p <- negation
