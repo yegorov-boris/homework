@@ -1,7 +1,5 @@
 module Task7 where
 
-import Todo(todo)
-
 data Deque a = Deque Int [a] Int [a]
 
 -- Пустая очередь
