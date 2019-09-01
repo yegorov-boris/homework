@@ -1,7 +1,5 @@
 module Task6 where
 
-import Todo(todo)
-
 data Color = R | B
 
 data LinkedTree a = E | T (LinkedTree a) Color (LinkedTree a) a (LinkedTree a)

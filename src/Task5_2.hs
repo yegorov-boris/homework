@@ -1,6 +1,5 @@
 module Task5_2 where
 
-import Todo(todo)
 import Data.Ratio
 
 data Stream a = Cons {
